@@ -5,11 +5,13 @@
 set -e
 
 # 加载配置
-CONFIG_FILE="$HOME/.gnupg/bw-gpg-config"
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+CONFIG_FILE="$SCRIPT_DIR/config"
 if [ -f "$CONFIG_FILE" ]; then
     source "$CONFIG_FILE"
 else
     echo "错误：配置文件不存在：$CONFIG_FILE"
+    echo "请复制 config.example 为 config 并填写你的配置"
     exit 1
 fi
 

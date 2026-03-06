@@ -4,7 +4,7 @@
 $ErrorActionPreference = "Stop"
 
 # 加载配置
-$ConfigFile = "$env:USERPROFILE\.gnupg\bw-gpg-config"
+$ConfigFile = Join-Path $PSScriptRoot "config"
 if (Test-Path $ConfigFile) {
     Get-Content $ConfigFile | ForEach-Object {
         if ($_ -match '^([^=]+)=(.+)$') {
@@ -15,6 +15,7 @@ if (Test-Path $ConfigFile) {
     }
 } else {
     Write-Host "错误：配置文件不存在：$ConfigFile" -ForegroundColor Red
+    Write-Host "请复制 config.example 为 config 并填写你的配置" -ForegroundColor Yellow
     exit 1
 }
 
