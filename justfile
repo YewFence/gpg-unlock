@@ -35,20 +35,32 @@ install:
 
     echo "重启终端或 source 对应文件后生效"
 
+# 从 bash/zsh 初始化文件中移除 gpgunlock 别名
+uninstall:
+    #!/usr/bin/env bash
+    REMOVED=0
+
+    for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
+        [ -f "$rc" ] || continue
+        if grep -q "gpgunlock" "$rc" 2>/dev/null; then
+            sed -i '/^# gpgunlock$/,/gpgunlock/d' "$rc"
+            echo "✓ 已从 $rc 移除"
+            REMOVED=1
+        else
+            echo "未在 $rc 中找到 gpgunlock，跳过"
+        fi
+    done
+
+    if [ "$REMOVED" -eq 0 ]; then
+        echo "未找到任何需要清理的配置"
+    else
+        echo "重启终端或 source 对应文件后生效"
+    fi
+
+# 从 PowerShell Profile 中移除 gpgunlock 函数
+uninstall-ps:
+    @pwsh -NoProfile -ExecutionPolicy Bypass -File "{{justfile_directory()}}/uninstall.ps1"
+
 # 安装 gpgunlock 函数到 PowerShell Profile
 install-ps:
-    @powershell -ExecutionPolicy Bypass -Command \
-        "$target = '{{justfile_directory()}}\\gpg-load-passphrase.ps1'; \
-        $line = \"function gpgunlock { & '$target' }\"; \
-        $profileDir = Split-Path $PROFILE; \
-        if (!(Test-Path $profileDir)) { New-Item -ItemType Directory -Path $profileDir -Force | Out-Null }; \
-        if (!(Test-Path $PROFILE)) { New-Item -ItemType File -Path $PROFILE -Force | Out-Null }; \
-        if (Select-String -Path $PROFILE -Pattern 'gpgunlock' -Quiet) { \
-            Write-Host '已存在于 ' + $PROFILE + '，跳过' \
-        } else { \
-            Add-Content -Path $PROFILE -Value ''; \
-            Add-Content -Path $PROFILE -Value '# gpgunlock'; \
-            Add-Content -Path $PROFILE -Value $line; \
-            Write-Host ('✓ 已添加到 ' + $PROFILE) \
-        }; \
-        Write-Host '重启 PowerShell 后生效'"
+    @pwsh -NoProfile -ExecutionPolicy Bypass -File "{{justfile_directory()}}/install.ps1" -ScriptDir "{{justfile_directory()}}"
