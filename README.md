@@ -9,6 +9,10 @@
 - GPG
 - 密码管理器 CLI（取决于所选后端）
 
+### 可选的依赖
+- [just](https://github.com/casey/just)
+> 用于自动化流程如安装/卸载
+
 ### 可选的后端
 - [Bitwarden CLI](https://github.com/bitwarden/clients)
 - [bitwarden-cli-bio](https://github.com/jeanregisser/bitwarden-cli-bio)
@@ -56,6 +60,22 @@ gpg-unlock init
 
 ```bash
 gpg-unlock
+```
+
+## 卸载
+
+### 使用 Justfile
+
+```bash
+just uninstall
+# 这会删除配置文件与可执行文件，实现干净卸载
+```
+
+### 手动卸载
+
+```bash
+gpg-unlock reset
+go clean -i .
 ```
 
 ## 许可证

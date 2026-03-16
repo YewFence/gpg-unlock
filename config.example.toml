@@ -14,8 +14,3 @@ backend = "bitwarden"
 command = "bwbio"
 item_name = "GPG"
 field_name = "passphrase"
-
-# 未来扩展示例（取消注释并修改 backend 字段即可切换）：
-# [backends.onepassword]
-# vault = "Personal"
-# item = "GPG Key"

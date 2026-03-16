@@ -9,6 +9,10 @@ build:
 install:
     go install .
 
+uninstall:
+    go run . reset
+    go clean -i .
+
 build-all:
     docker compose run --rm build
 
