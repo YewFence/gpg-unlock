@@ -6,6 +6,9 @@ run *ARGS:
 build:
     go build -o gpg-unlock .
 
+install:
+    go install .
+
 build-all:
     docker compose run --rm build
 

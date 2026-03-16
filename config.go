@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 
 	"github.com/BurntSushi/toml"
 )
@@ -45,26 +44,25 @@ func findConfigFile() (string, error) {
 			return p, nil
 		}
 	}
-	return "", fmt.Errorf("未找到配置文件，请创建以下任一文件:\n  %s", candidates[0])
+	return "", fmt.Errorf("未找到配置文件，请运行 gpg-unlock init 创建配置\n  预期路径: %s", candidates[0])
+}
+
+// configDir 返回配置目录路径（统一使用 ~/.config/gpg-unlock）
+func configDir() string {
+	if xdg := os.Getenv("XDG_CONFIG_HOME"); xdg != "" {
+		return filepath.Join(xdg, "gpg-unlock")
+	}
+	if home, err := os.UserHomeDir(); err == nil {
+		return filepath.Join(home, ".config", "gpg-unlock")
+	}
+	return ""
 }
 
 // configPaths 返回配置文件候选路径
 func configPaths() []string {
-	var paths []string
-
-	if xdg := os.Getenv("XDG_CONFIG_HOME"); xdg != "" {
-		paths = append(paths, filepath.Join(xdg, "gpg-unlock", "config.toml"))
+	dir := configDir()
+	if dir == "" {
+		return nil
 	}
-
-	if runtime.GOOS == "windows" {
-		if appdata := os.Getenv("APPDATA"); appdata != "" {
-			paths = append(paths, filepath.Join(appdata, "gpg-unlock", "config.toml"))
-		}
-	} else {
-		if home, err := os.UserHomeDir(); err == nil {
-			paths = append(paths, filepath.Join(home, ".config", "gpg-unlock", "config.toml"))
-		}
-	}
-
-	return paths
+	return []string{filepath.Join(dir, "config.toml")}
 }

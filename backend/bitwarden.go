@@ -3,6 +3,7 @@ package backend
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -16,6 +17,14 @@ type Bitwarden struct{}
 
 func (b *Bitwarden) Name() string { return "bitwarden" }
 
+func (b *Bitwarden) ConfigFields() []ConfigField {
+	return []ConfigField{
+		{Key: "command", Prompt: "CLI 命令 (command, 默认 bw)", Required: false},
+		{Key: "item_name", Prompt: "Bitwarden 项目名称 (item_name)", Required: true},
+		{Key: "field_name", Prompt: "字段名称 (field_name)", Required: true},
+	}
+}
+
 func (b *Bitwarden) GetPassphrase(params map[string]string) (string, error) {
 	itemName := params["item_name"]
 	fieldName := params["field_name"]
@@ -23,9 +32,16 @@ func (b *Bitwarden) GetPassphrase(params map[string]string) (string, error) {
 		return "", fmt.Errorf("bitwarden 后端需要 item_name 和 field_name 参数")
 	}
 
-	out, err := exec.Command("bw", "get", "item", itemName).Output()
+	bin := params["command"]
+	if bin == "" {
+		bin = "bw"
+	}
+
+	cmd := exec.Command(bin, "get", "item", itemName)
+	cmd.Stderr = os.Stderr
+	out, err := cmd.Output()
 	if err != nil {
-		return "", fmt.Errorf("bw get item %q 失败: %w", itemName, err)
+		return "", fmt.Errorf("%s get item %q 失败: %w", bin, itemName, err)
 	}
 
 	var item struct {
