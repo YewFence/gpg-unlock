@@ -2,16 +2,20 @@
 
 从密码管理器获取 GPG 密码短语并注入 gpg-agent 缓存，实现 Git 签名免密。
 
-通过 Backend interface 支持多种密码管理器后端，当前实现了 Bitwarden 后端。
+通过 Backend interface 支持多种密码管理器后端
 
 ## 依赖
 
 - GPG
 - 密码管理器 CLI（取决于所选后端）
 
+### 可选的后端
+- [Bitwarden CLI](https://github.com/bitwarden/clients)
+- [bitwarden-cli-bio](https://github.com/jeanregisser/bitwarden-cli-bio)
+
 ### Bitwarden 后端
 
-推荐使用 [bitwarden-cli-bio](https://github.com/jeanregisser/bitwarden-cli-bio)（`bw-bio`），支持系统生物认证（指纹/面容）解锁 vault，体验远好于官方 CLI 的主密码交互。
+推荐使用 [bitwarden-cli-bio](https://github.com/jeanregisser/bitwarden-cli-bio)（`bwbio`），支持系统生物认证（指纹/面容）解锁 vault，若使用官方 CLI 需要先手动解锁并配置 session key 环境变量
 
 安装：
 
@@ -23,11 +27,20 @@ npm i -g @nicolo-ribaudo/bitwarden-cli-bio
 
 ## 安装
 
+### 使用 Go
+
 ```bash
 go install github.com/YewFence/gpg-unlock@latest
 ```
 
-或从 [Releases](https://github.com/YewFence/gpg-unlock/releases) 下载预编译二进制。
+### 从源码编译
+
+```bash
+git clone https://github.com/YewFence/gpg-unlock.Git
+just install
+# 如果没有安装 Just 也可以手动安装
+go install .
+```
 
 ## 配置
 
@@ -37,16 +50,7 @@ gpg-unlock init
 
 交互式向导会引导你选择后端并生成配置文件到 `~/.config/gpg-unlock/config.toml`。
 
-配置示例：
-
-```toml
-backend = "bitwarden"
-
-[backends.bitwarden]
-command = "bw-bio"       # CLI 命令，默认 "bw"
-item_name = "GPG"        # Bitwarden 条目名称
-field_name = "passphrase" # 密码短语字段名
-```
+也可以参考具体[配置示例](./config.example.toml)自行配置
 
 ## 使用
 

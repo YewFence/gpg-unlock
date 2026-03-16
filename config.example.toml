@@ -8,10 +8,10 @@ backend = "bitwarden"
 
 # Bitwarden 后端配置
 [backends.bitwarden]
-# CLI 命令，推荐使用支持生物认证的 bw-bio
+# CLI 命令，推荐使用支持生物认证的 bwbio
 # https://github.com/jeanregisser/bitwarden-cli-bio
 # 默认为 "bw"（官方 CLI）
-command = "bw-bio"
+command = "bwbio"
 item_name = "GPG"
 field_name = "passphrase"
 
