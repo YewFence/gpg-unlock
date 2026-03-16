@@ -1,0 +1,17 @@
+# gpg-unlock 配置示例
+# 复制此文件到以下任一位置并修改：
+#   Linux/macOS: ~/.config/gpg-unlock/config.toml
+#   Windows:     %APPDATA%/gpg-unlock/config.toml
+
+# 使用的密码管理器后端
+backend = "bitwarden"
+
+# Bitwarden 后端配置
+[backends.bitwarden]
+item_name = "GPG"
+field_name = "passphrase"
+
+# 未来扩展示例（取消注释并修改 backend 字段即可切换）：
+# [backends.onepassword]
+# vault = "Personal"
+# item = "GPG Key"

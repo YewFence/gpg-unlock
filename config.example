@@ -1,8 +1,0 @@
-# Bitwarden GPG 密码短语加载器 - 配置示例
-# 复制此文件为 config 并填写你的实际配置
-
-# Bitwarden 中存储 GPG 密码短语的条目名称
-BW_ITEM_NAME=你的Bitwarden条目名称
-
-# 条目中存储密码短语的自定义字段名称
-BW_FIELD_NAME=gpg-passphrase
