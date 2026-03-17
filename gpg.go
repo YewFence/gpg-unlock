@@ -100,3 +100,38 @@ func findPresetCommand() string {
 	}
 	return ""
 }
+
+// checkKeygripCached 检查指定 keygrip 的密码短语是否已缓存
+func checkKeygripCached(keygrip string) bool {
+	cmd := exec.Command("gpg-connect-agent")
+	cmd.Stdin = strings.NewReader(fmt.Sprintf("KEYINFO %s\n", keygrip))
+	out, err := cmd.Output()
+	if err != nil {
+		return false // 检测失败视为未缓存（保守策略）
+	}
+
+	// 解析输出：S KEYINFO <keygrip> <type> <serialno> <idstr> <cached> ...
+	// 第 7 个字段（索引 6）：1=已缓存，-=未缓存
+	for _, line := range strings.Split(string(out), "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "S KEYINFO") {
+			fields := strings.Fields(line)
+			if len(fields) >= 7 && fields[2] == keygrip {
+				return fields[6] == "1"
+			}
+		}
+	}
+	return false
+}
+
+// checkAllKeygripsCached 检查所有 keygrip 是否都已缓存
+// 返回 (已缓存数量, 总数量)
+func checkAllKeygripsCached(keygrips []string) (int, int) {
+	cached := 0
+	for _, kg := range keygrips {
+		if checkKeygripCached(kg) {
+			cached++
+		}
+	}
+	return cached, len(keygrips)
+}
