@@ -1,8 +1,28 @@
 # gpg-unlock
 
-从密码管理器获取 GPG 密码短语并注入 gpg-agent 缓存，实现 Git 签名免密。
+从密码管理器获取 GPG 密码短语并注入 gpg-agent 缓存，实现 Git 免密签名。
 
 通过 Backend interface 支持多种密码管理器后端
+
+## 为什么需要这个工具？
+
+虽然 GPG 提供了 `gpg-preset-passphrase` 工具来预设密码短语，但将其与密码管理器集成仍需要手动操作：
+
+| 方案 | 优点 | 缺点 |
+|------|------|------|
+| **手动输入密码** | 简单直接 | 每次签名都要输入，体验差 |
+| **移除密钥密码** | 完全免密 | 安全风险高，私钥裸奔 |
+| **pam-gnupg** | 登录时自动解锁 | 依赖 PAM，密码必须与系统登录密码相同 |
+| **手写脚本** | 灵活 | 需要自己处理 keygrip 获取、错误处理、多后端支持 |
+| **gpg-unlock** | 开箱即用，支持多密码管理器，自动化完整流程 | 需要安装额外工具 |
+
+**gpg-unlock 的独特之处：**
+- ✅ 支持多个密码管理器后端（Bitwarden、Infisical），易于扩展
+- ✅ 自动获取 keygrip 并注入密码短语到 gpg-agent
+- ✅ 智能缓存检测，避免重复调用密码管理器
+- ✅ 完整的配置管理和交互式初始化向导
+- ✅ 跨平台支持（Linux、macOS、Windows）
+- ✅ 单一二进制文件，无运行时依赖
 
 ## 依赖
 
@@ -25,10 +45,10 @@
 安装：
 
 ```bash
-npm i -g @nicolo-ribaudo/bitwarden-cli-bio
+npm install -g bitwarden-cli-bio
 ```
 
-也兼容官方 [Bitwarden CLI](https://bitwarden.com/help/cli/)（`bw`），但需要手动输入主密码或管理 session key。
+也兼容官方 [Bitwarden CLI](https://bitwarden.com/help/cli/)（`bw`），但需要手动设置 session key。
 
 ### Infisical 后端
 
@@ -41,7 +61,26 @@ npm i -g @nicolo-ribaudo/bitwarden-cli-bio
 
 ## 安装
 
-### 使用 Go
+### 从 Release 下载
+
+前往 [GitHub Releases](https://github.com/YewFence/gpg-unlock/releases/latest) 下载对应平台的预编译二进制文件。
+
+```bash
+# Linux/macOS（以 amd64 为例）
+curl -L https://github.com/YewFence/gpg-unlock/releases/latest/download/gpg-unlock-linux-amd64 -o gpg-unlock
+chmod +x gpg-unlock
+sudo mv gpg-unlock /usr/local/bin/
+```
+
+```powershell
+# Windows（PowerShell）
+Invoke-WebRequest -Uri "https://github.com/YewFence/gpg-unlock/releases/latest/download/gpg-unlock-windows-amd64.exe" -OutFile "gpg-unlock.exe"
+Move-Item gpg-unlock.exe "C:\Windows\System32\gpg-unlock.exe"
+```
+
+可用平台：`linux-amd64`、`linux-arm64`、`darwin-amd64`、`darwin-arm64`、`windows-amd64`
+
+### Go
 
 ```bash
 go install github.com/YewFence/gpg-unlock@latest
@@ -49,11 +88,33 @@ go install github.com/YewFence/gpg-unlock@latest
 
 ### 从源码编译
 
+#### Go
+
 ```bash
-git clone https://github.com/YewFence/gpg-unlock.Git
+git clone https://github.com/YewFence/gpg-unlock.git
+cd gpg-unlock
 just install
 # 如果没有安装 Just 也可以手动安装
 go install .
+```
+
+#### Docker
+
+```bash
+git clone https://github.com/YewFence/gpg-unlock.git
+cd gpg-unlock
+docker compose run --rm build
+```
+
+构建完成后，二进制文件会生成在 `dist/` 目录下，选择对应平台的文件并手动放入 `PATH` 中：
+
+```bash
+# Linux/macOS 示例
+sudo cp dist/gpg-unlock-linux-amd64 /usr/local/bin/gpg-unlock
+sudo chmod +x /usr/local/bin/gpg-unlock
+
+# Windows 示例（PowerShell）
+copy dist\gpg-unlock-windows-amd64.exe C:\Windows\System32\gpg-unlock.exe
 ```
 
 ## 配置
@@ -68,9 +129,41 @@ gpg-unlock init
 
 ## 使用
 
+### 基本用法
+
 ```bash
 gpg-unlock
 ```
+
+程序会自动检测 gpg-agent 中是否已缓存密码短语：
+- 如果**已缓存**，直接退出，无需调用密码管理器
+- 如果**未缓存**或**部分缓存**，从密码管理器获取密码并注入
+
+### 强制重新注入
+
+```bash
+gpg-unlock --force
+```
+
+跳过缓存检测，强制重新从密码管理器获取密码并注入到 gpg-agent。适用于：
+- 密码已更改，需要刷新缓存
+- 怀疑缓存状态异常
+- 需要确保使用最新密码
+
+## 贡献新后端
+
+欢迎为其他密码管理器贡献后端实现！本项目的后端接口设计简洁，易于扩展。
+
+### 如何添加新后端
+
+1. 在 `backend/` 目录下创建新文件（如 `backend/yourmanager.go`）
+2. 实现 `Backend` interface（只需实现 `GetPassphrase(params map[string]string) (string, error)` 方法）
+3. 在 `init()` 函数中调用 `Register("backend-name", &YourBackend{})` 注册后端
+4. 更新 README 和配置示例
+
+可以参考现有的 [Bitwarden](./backend/bitwarden.go) 和 [Infisical](./backend/infisical.go) 后端实现。
+
+欢迎提交 Pull Request！
 
 ## 卸载
 
