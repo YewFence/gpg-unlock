@@ -14,3 +14,19 @@ backend = "bitwarden"
 command = "bwbio"
 item_name = "GPG"
 field_name = "passphrase"
+
+# Infisical 后端配置
+# [backends.infisical]
+# secret_name = "GPG_PASSPHRASE"
+# 含 .infisical.json 的项目目录（与 project_id 二选一）
+# project_dir = "/path/to/my-project"
+# 或直接指定项目 ID
+# project_id = ""
+# 环境，默认 dev
+# environment = ""
+# Secret 路径，默认 /
+# secret_path = ""
+# 自架实例域名（可选）
+# domain = "https://infisical.example.com"
+# Access Token（CI/CD 场景）
+# token = ""

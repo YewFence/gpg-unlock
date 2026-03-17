@@ -68,15 +68,15 @@ func main() {
 	fmt.Println()
 
 	fmt.Println("正在获取 GPG 密钥信息...")
-	keygrip, err := getKeygrip()
+	keygrips, err := getKeygrips()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "错误: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Printf("密钥 Keygrip: %s\n\n", keygrip)
+	fmt.Printf("发现 %d 个密钥 Keygrip\n\n", len(keygrips))
 
 	fmt.Println("正在缓存密码短语到 gpg-agent...")
-	if err := presetPassphrase(keygrip, passphrase); err != nil {
+	if err := presetPassphrase(keygrips, passphrase); err != nil {
 		fmt.Fprintf(os.Stderr, "错误: %v\n", err)
 		os.Exit(1)
 	}

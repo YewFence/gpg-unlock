@@ -10,22 +10,26 @@ import (
 	"time"
 )
 
-// getKeygrip 获取第一个 GPG 私钥的 keygrip，带重试
-func getKeygrip() (string, error) {
+// getKeygrips 获取所有 GPG 私钥的 keygrip，带重试
+func getKeygrips() ([]string, error) {
 	for i := 0; i < 3; i++ {
 		out, err := exec.Command("gpg", "--with-keygrip", "-K").Output()
 		if err == nil {
+			var grips []string
 			for _, line := range strings.Split(string(out), "\n") {
 				line = strings.TrimSpace(line)
-				if strings.HasPrefix(line, "Keygrip") || strings.Contains(line, "Keygrip") {
+				if strings.Contains(line, "Keygrip") {
 					parts := strings.SplitN(line, "=", 2)
 					if len(parts) == 2 {
 						kg := strings.TrimSpace(parts[1])
 						if kg != "" {
-							return kg, nil
+							grips = append(grips, kg)
 						}
 					}
 				}
+			}
+			if len(grips) > 0 {
+				return grips, nil
 			}
 		}
 		if i < 2 {
@@ -33,17 +37,19 @@ func getKeygrip() (string, error) {
 			time.Sleep(2 * time.Second)
 		}
 	}
-	return "", fmt.Errorf("无法获取 GPG 密钥的 keygrip，请确保已创建 GPG 密钥")
+	return nil, fmt.Errorf("无法获取 GPG 密钥的 keygrip，请确保已创建 GPG 密钥")
 }
 
-// presetPassphrase 将密码短语注入 gpg-agent
-func presetPassphrase(keygrip, passphrase string) error {
+// presetPassphrase 将密码短语注入 gpg-agent（对所有 keygrip）
+func presetPassphrase(keygrips []string, passphrase string) error {
 	presetCmd := findPresetCommand()
 	if presetCmd != "" {
-		cmd := exec.Command(presetCmd, "--preset", keygrip)
-		cmd.Stdin = strings.NewReader(passphrase)
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("gpg-preset-passphrase 失败: %w", err)
+		for _, kg := range keygrips {
+			cmd := exec.Command(presetCmd, "--preset", kg)
+			cmd.Stdin = strings.NewReader(passphrase)
+			if err := cmd.Run(); err != nil {
+				return fmt.Errorf("gpg-preset-passphrase 失败 (keygrip %s): %w", kg, err)
+			}
 		}
 		fmt.Println("密码短语已缓存到 gpg-agent")
 		return nil

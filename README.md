@@ -16,6 +16,7 @@
 ### 可选的后端
 - [Bitwarden CLI](https://github.com/bitwarden/clients)
 - [bitwarden-cli-bio](https://github.com/jeanregisser/bitwarden-cli-bio)
+- [Infisical CLI](https://infisical.com/docs/cli/overview)
 
 ### Bitwarden 后端
 
@@ -28,6 +29,15 @@ npm i -g @nicolo-ribaudo/bitwarden-cli-bio
 ```
 
 也兼容官方 [Bitwarden CLI](https://bitwarden.com/help/cli/)（`bw`），但需要手动输入主密码或管理 session key。
+
+### Infisical 后端
+
+使用 [Infisical CLI](https://infisical.com/docs/cli/overview) 从 Infisical 平台获取密码短语。
+
+前置要求：
+1. 安装 Infisical CLI
+2. 通过 `infisical login` 登录（用户登录或 Machine Identity）
+3. 项目目录中需有 `.infisical.json`（通过 `infisical init` 生成），或在配置中指定 `project_id`
 
 ## 安装
 
