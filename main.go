@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -22,6 +23,9 @@ func main() {
 		case "reset":
 			runReset()
 			return
+		case "edit":
+			runEdit()
+			return
 		case "version":
 			fmt.Println("gpg-unlock", version)
 			return
@@ -29,6 +33,8 @@ func main() {
 	}
 
 	configPath := flag.String("config", "", "配置文件路径")
+	backendName := flag.String("backend", "", "指定后端（覆盖配置文件）")
+	flag.StringVar(backendName, "b", "", "指定后端（简写）")
 	showVersion := flag.Bool("version", false, "显示版本")
 	force := flag.Bool("force", false, "强制重新注入密码短语（即使已缓存）")
 	flag.Parse()
@@ -42,6 +48,11 @@ func main() {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "错误: %v\n", err)
 		os.Exit(1)
+	}
+
+	// 如果指定了 --backend/-b，覆盖配置文件中的后端
+	if *backendName != "" {
+		cfg.Backend = *backendName
 	}
 
 	b, err := backend.Get(cfg.Backend)
@@ -220,4 +231,51 @@ func runReset() {
 	}
 
 	fmt.Println("配置已清除")
+}
+
+func runEdit() {
+	dir := configDir()
+	if dir == "" {
+		fmt.Fprintln(os.Stderr, "错误: 无法确定配置目录（HOME 未设置）")
+		os.Exit(1)
+	}
+
+	cfgPath := filepath.Join(dir, "config.toml")
+
+	if _, err := os.Stat(cfgPath); os.IsNotExist(err) {
+		fmt.Fprintf(os.Stderr, "错误: 配置文件不存在: %s\n", cfgPath)
+		fmt.Fprintln(os.Stderr, "请先运行 gpg-unlock init 创建配置")
+		os.Exit(1)
+	}
+
+	editor := os.Getenv("EDITOR")
+	if editor == "" {
+		if _, err := exec.LookPath("vi"); err == nil {
+			editor = "vi"
+		} else if _, err := exec.LookPath("notepad"); err == nil {
+			editor = "notepad"
+		} else {
+			fmt.Fprintln(os.Stderr, "错误: 未设置 EDITOR 环境变量，且未找到 vi 或 notepad")
+			os.Exit(1)
+		}
+	}
+
+	// 解析编辑器命令（可能包含参数，如 "zed --wait"）
+	parts := strings.Fields(editor)
+	if len(parts) == 0 {
+		fmt.Fprintln(os.Stderr, "错误: EDITOR 环境变量为空")
+		os.Exit(1)
+	}
+
+	// 将配置文件路径追加到参数列表
+	args := append(parts[1:], cfgPath)
+	cmd := exec.Command(parts[0], args...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "错误: 启动编辑器失败: %v\n", err)
+		os.Exit(1)
+	}
 }
