@@ -7,6 +7,8 @@ type ConfigField struct {
 	Key      string // TOML 键名
 	Prompt   string // 交互提示文本
 	Required bool
+	Example  string // 示例值，用于生成 example 配置
+	Comment  string // 字段说明，生成为注释行
 }
 
 // Backend 定义密码获取接口

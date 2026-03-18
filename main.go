@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/YewFence/gpg-unlock/backend"
@@ -25,6 +26,9 @@ func main() {
 			return
 		case "edit":
 			runEdit()
+			return
+		case "gen-example":
+			runGenExample()
 			return
 		case "version":
 			fmt.Println("gpg-unlock", version)
@@ -136,62 +140,103 @@ func runInit() {
 		}
 	}
 
-	reader := bufio.NewReader(os.Stdin)
-
-	names := backend.Names()
-	fmt.Println("=== gpg-unlock 配置向导 ===")
-	fmt.Println()
-	fmt.Println("可用后端:")
-	for i, name := range names {
-		fmt.Printf("  %d. %s\n", i+1, name)
-	}
-	fmt.Printf("选择后端 [1]: ")
-	input := readLine(reader)
-	idx := 0
-	if input != "" {
-		n, err := fmt.Sscanf(input, "%d", &idx)
-		if n != 1 || err != nil || idx < 1 || idx > len(names) {
-			fmt.Fprintf(os.Stderr, "错误: 无效选择 %q\n", input)
-			os.Exit(1)
-		}
-		idx--
-	}
-	chosen := names[idx]
-	b, err := backend.Get(chosen)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "错误: %v\n", err)
-		os.Exit(1)
-	}
-
-	fmt.Println()
-	params := map[string]string{}
-	for _, f := range b.ConfigFields() {
-		fmt.Printf("%s: ", f.Prompt)
-		val := readLine(reader)
-		if f.Required && val == "" {
-			fmt.Fprintf(os.Stderr, "错误: %s 不能为空\n", f.Key)
-			os.Exit(1)
-		}
-		params[f.Key] = val
-	}
-
-	var buf strings.Builder
-	fmt.Fprintf(&buf, "backend = %q\n\n[backends.%s]\n", chosen, chosen)
-	for _, f := range b.ConfigFields() {
-		fmt.Fprintf(&buf, "%s = %q\n", f.Key, params[f.Key])
-	}
-
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		fmt.Fprintf(os.Stderr, "错误: 创建目录失败: %v\n", err)
 		os.Exit(1)
 	}
+
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Println("=== gpg-unlock 配置向导 ===")
+	fmt.Println()
+
+	// key: 后端名，value: 配置参数；slice 记录配置顺序
+	configuredParams := map[string]map[string]string{}
+	var configuredOrder []string
+
+	for {
+		names := backend.Names()
+		sort.Strings(names)
+		fmt.Println("可用后端:")
+		for i, name := range names {
+			mark := ""
+			if _, ok := configuredParams[name]; ok {
+				mark = " ✓"
+			}
+			fmt.Printf("  %d. %s%s\n", i+1, name, mark)
+		}
+		fmt.Print("选择后端 [1]: ")
+		input := readLine(reader)
+		idx := 0
+		if input != "" {
+			n, err := fmt.Sscanf(input, "%d", &idx)
+			if n != 1 || err != nil || idx < 1 || idx > len(names) {
+				fmt.Fprintf(os.Stderr, "错误: 无效选择 %q\n", input)
+				fmt.Println()
+				continue
+			}
+			idx--
+		}
+		chosen := names[idx]
+		b, err := backend.Get(chosen)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "错误: %v\n", err)
+			fmt.Println()
+			continue
+		}
+
+		fmt.Println()
+		params := map[string]string{}
+		for _, f := range b.ConfigFields() {
+		fieldLoop:
+			for {
+				fmt.Printf("%s: ", f.Prompt)
+				val := readLine(reader)
+				if f.Required && val == "" {
+					fmt.Fprintf(os.Stderr, "错误: %s 不能为空\n", f.Key)
+					continue
+				}
+				params[f.Key] = val
+				break fieldLoop
+			}
+		}
+
+		if _, exists := configuredParams[chosen]; !exists {
+			configuredOrder = append(configuredOrder, chosen)
+		}
+		configuredParams[chosen] = params
+
+		fmt.Println()
+		fmt.Print("继续配置另一个后端？[y/N] ")
+		if !confirmYes() {
+			break
+		}
+		fmt.Println()
+	}
+
+	// 生成 config.toml
+	var buf strings.Builder
+	fmt.Fprintf(&buf, "backend = %q\n", configuredOrder[0])
+	for _, name := range configuredOrder {
+		b, _ := backend.Get(name)
+		fmt.Fprintf(&buf, "\n[backends.%s]\n", name)
+		for _, f := range b.ConfigFields() {
+			fmt.Fprintf(&buf, "%s = %q\n", f.Key, configuredParams[name][f.Key])
+		}
+	}
+
 	if err := os.WriteFile(cfgPath, []byte(buf.String()), 0o644); err != nil {
 		fmt.Fprintf(os.Stderr, "错误: 写入配置失败: %v\n", err)
 		os.Exit(1)
 	}
 
+	// 生成 example 配置
+	if err := generateExampleConfig(dir); err != nil {
+		fmt.Fprintf(os.Stderr, "警告: 生成示例配置失败: %v\n", err)
+	}
+
 	fmt.Println()
 	fmt.Printf("配置已写入: %s\n", cfgPath)
+	fmt.Printf("示例配置: %s\n", filepath.Join(dir, "config.example.toml"))
 	fmt.Println("现在可以运行 gpg-unlock 来加载密码短语了")
 }
 

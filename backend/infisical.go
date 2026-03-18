@@ -18,14 +18,14 @@ func (i *Infisical) Name() string { return "infisical" }
 
 func (i *Infisical) ConfigFields() []ConfigField {
 	return []ConfigField{
-		{Key: "command", Prompt: "CLI 命令 (command, 默认 infisical)", Required: false},
-		{Key: "secret_name", Prompt: "Secret 名称 (secret_name)", Required: true},
-		{Key: "project_dir", Prompt: "项目目录路径 (project_dir, 含 .infisical.json)", Required: false},
-		{Key: "project_id", Prompt: "项目 ID (project_id, 与 project_dir 二选一)", Required: false},
-		{Key: "environment", Prompt: "环境 (environment, 如 dev/staging/prod)", Required: false},
-		{Key: "secret_path", Prompt: "Secret 路径 (secret_path, 默认 /)", Required: false},
-		{Key: "domain", Prompt: "自架实例域名 (domain, 如 https://infisical.example.com)", Required: false},
-		{Key: "token", Prompt: "Access Token (token, 用于 CI/CD)", Required: false},
+		{Key: "command", Prompt: "CLI 命令 (command, 默认 infisical)", Required: false, Example: "infisical", Comment: "Infisical CLI 命令"},
+		{Key: "secret_name", Prompt: "Secret 名称 (secret_name)", Required: true, Example: "GPG_PASSPHRASE", Comment: "Secret 名称（必填）"},
+		{Key: "project_dir", Prompt: "项目目录路径 (project_dir, 含 .infisical.json)", Required: false, Example: "/path/to/project", Comment: "含 .infisical.json 的项目目录（与 project_id 二选一）"},
+		{Key: "project_id", Prompt: "项目 ID (project_id, 与 project_dir 二选一)", Required: false, Example: "", Comment: "项目 ID（与 project_dir 二选一）"},
+		{Key: "environment", Prompt: "环境 (environment, 如 dev/staging/prod)", Required: false, Example: "dev", Comment: "环境，如 dev/staging/prod"},
+		{Key: "secret_path", Prompt: "Secret 路径 (secret_path, 默认 /)", Required: false, Example: "/", Comment: "Secret 路径，默认 /"},
+		{Key: "domain", Prompt: "自架实例域名 (domain, 如 https://infisical.example.com)", Required: false, Example: "https://infisical.example.com", Comment: "自架实例域名"},
+		{Key: "token", Prompt: "Access Token (token, 用于 CI/CD)", Required: false, Example: "", Comment: "Access Token，用于 CI/CD"},
 	}
 }
 
