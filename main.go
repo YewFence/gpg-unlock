@@ -131,27 +131,25 @@ func runInit() {
 
 	cfgPath := filepath.Join(dir, "config.toml")
 
-	if _, err := os.Stat(cfgPath); err == nil {
-		fmt.Printf("配置文件已存在: %s\n", cfgPath)
-		fmt.Print("要覆盖吗？[y/N] ")
-		if !confirmYes() {
-			fmt.Println("已取消")
-			return
-		}
-	}
-
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		fmt.Fprintf(os.Stderr, "错误: 创建目录失败: %v\n", err)
 		os.Exit(1)
 	}
 
+	// 尝试加载现有配置
+	var existingBackend string
+	existingParams := map[string]map[string]string{}
+	if existing, err := loadConfig(cfgPath); err == nil {
+		existingBackend = existing.Backend
+		for name, params := range existing.Backends {
+			existingParams[name] = params
+		}
+		fmt.Printf("已加载现有配置: %s\n", cfgPath)
+	}
+
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Println("=== gpg-unlock 配置向导 ===")
 	fmt.Println()
-
-	// key: 后端名，value: 配置参数；slice 记录配置顺序
-	configuredParams := map[string]map[string]string{}
-	var configuredOrder []string
 
 	for {
 		names := backend.Names()
@@ -159,7 +157,7 @@ func runInit() {
 		fmt.Println("可用后端:")
 		for i, name := range names {
 			mark := ""
-			if _, ok := configuredParams[name]; ok {
+			if _, ok := existingParams[name]; ok {
 				mark = " ✓"
 			}
 			fmt.Printf("  %d. %s%s\n", i+1, name, mark)
@@ -187,7 +185,6 @@ func runInit() {
 		fmt.Println()
 		params := map[string]string{}
 		for _, f := range b.ConfigFields() {
-		fieldLoop:
 			for {
 				fmt.Printf("%s: ", f.Prompt)
 				val := readLine(reader)
@@ -196,14 +193,14 @@ func runInit() {
 					continue
 				}
 				params[f.Key] = val
-				break fieldLoop
+				break
 			}
 		}
 
-		if _, exists := configuredParams[chosen]; !exists {
-			configuredOrder = append(configuredOrder, chosen)
+		existingParams[chosen] = params
+		if existingBackend == "" {
+			existingBackend = chosen
 		}
-		configuredParams[chosen] = params
 
 		fmt.Println()
 		fmt.Print("继续配置另一个后端？[y/N] ")
@@ -213,14 +210,27 @@ func runInit() {
 		fmt.Println()
 	}
 
-	// 生成 config.toml
+	// 生成 config.toml，按字母序写入所有后端
+	allNames := make([]string, 0, len(existingParams))
+	for name := range existingParams {
+		allNames = append(allNames, name)
+	}
+	sort.Strings(allNames)
+
 	var buf strings.Builder
-	fmt.Fprintf(&buf, "backend = %q\n", configuredOrder[0])
-	for _, name := range configuredOrder {
-		b, _ := backend.Get(name)
+	fmt.Fprintf(&buf, "backend = %q\n", existingBackend)
+	for _, name := range allNames {
+		b, err := backend.Get(name)
 		fmt.Fprintf(&buf, "\n[backends.%s]\n", name)
+		if err != nil {
+			// 未知后端（可能是旧配置残留），原样写回
+			for k, v := range existingParams[name] {
+				fmt.Fprintf(&buf, "%s = %q\n", k, v)
+			}
+			continue
+		}
 		for _, f := range b.ConfigFields() {
-			fmt.Fprintf(&buf, "%s = %q\n", f.Key, configuredParams[name][f.Key])
+			fmt.Fprintf(&buf, "%s = %q\n", f.Key, existingParams[name][f.Key])
 		}
 	}
 
