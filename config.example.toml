@@ -17,7 +17,7 @@ field_name = "passphrase"
 # Infisical CLI 命令（与 docker_image 二选一）
 # command = "infisical"
 # 设置后用 docker run <image> 代替本地 infisical 命令
-# docker_image = "infisical/cli"
+# docker_image = "infisical/cli:latest"
 # Secret 名称
 secret_name = "GPG_PASSPHRASE"
 # 含 .infisical.json 的项目目录（与 project_id 二选一）

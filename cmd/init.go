@@ -86,28 +86,54 @@ func runInit(cmd *cobra.Command, args []string) error {
 		}
 
 		fmt.Println()
-		params := map[string]string{}
-		for _, f := range b.ConfigFields() {
-			for {
-				fmt.Printf("%s; 示例： %s", f.Prompt, f.Example)
-				if f.DefaultValue != "" {
-					fmt.Printf("(默认: %s) ", f.DefaultValue)
+		current := existingParams[chosen]
+		if current == nil {
+			current = map[string]string{}
+		}
+		var formatted map[string]string
+		for {
+			params := map[string]string{}
+			for _, f := range b.ConfigFields() {
+				for {
+					suggestion := current[f.Key]
+					if suggestion == "" {
+						suggestion = f.DefaultValue
+					}
+					fmt.Printf("%s; 示例： %s", f.Prompt, f.Example)
+					if suggestion != "" {
+						fmt.Printf("(默认: %s) ", suggestion)
+					}
+					if f.Required {
+						fmt.Print("（必填） ")
+					}
+					fmt.Print("：")
+					val := readLine(reader)
+					if val == "" {
+						fmt.Printf("使用默认值：%s\n", suggestion)
+						val = suggestion
+					}
+					if f.Required && val == "" {
+						fmt.Fprintf(os.Stderr, "错误: %s 不能为空\n", f.Key)
+						continue
+					}
+					params[f.Key] = val
+					break
 				}
-				if f.Required {
-					fmt.Print("（必填） ")
-				}
-				fmt.Print("：")
-				val := readLine(reader)
-				if f.Required && val == "" {
-					fmt.Fprintf(os.Stderr, "错误: %s 不能为空\n", f.Key)
-					continue
-				}
-				params[f.Key] = val
+			}
+			formatted = b.FormatConfig(params)
+			errs := b.ValidateConfig(formatted)
+			if len(errs) == 0 {
 				break
 			}
+			fmt.Fprintln(os.Stderr, "配置校验失败:")
+			for _, e := range errs {
+				fmt.Fprintf(os.Stderr, "  - %v\n", e)
+			}
+			fmt.Println("请重新输入配置。")
+			fmt.Println()
+			current = params
 		}
-
-		existingParams[chosen] = b.FormatConfig(params)
+		existingParams[chosen] = formatted
 		if existingBackend == "" {
 			existingBackend = chosen
 		}
