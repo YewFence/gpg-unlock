@@ -48,6 +48,22 @@ func runInit(cmd *cobra.Command, args []string) error {
 			existingParams[name] = params
 		}
 		fmt.Printf("已加载现有配置: %s\n", cfgPath)
+
+		// 检查现有配置中是否存在未注册的后端
+		var unknown []string
+		for name := range existing.Backends {
+			if _, err := backend.Get(name); err != nil {
+				unknown = append(unknown, name)
+			}
+		}
+		if len(unknown) > 0 {
+			sort.Strings(unknown)
+			return fmt.Errorf(
+				"配置文件中存在未注册的后端: %v\n"+
+					"这可能是版本升级导致的不兼容变更，请手动编辑配置文件: %s",
+				unknown, cfgPath,
+			)
+		}
 	}
 
 	reader := bufio.NewReader(os.Stdin)
@@ -158,14 +174,8 @@ func runInit(cmd *cobra.Command, args []string) error {
 	var buf strings.Builder
 	fmt.Fprintf(&buf, "backend = %q\n", existingBackend)
 	for _, name := range allNames {
-		b, err := backend.Get(name)
+		b, _ := backend.Get(name) // 前面已校验，此处不会失败
 		fmt.Fprintf(&buf, "\n[backends.%s]\n", name)
-		if err != nil {
-			for k, v := range existingParams[name] {
-				fmt.Fprintf(&buf, "%s = %q\n", k, v)
-			}
-			continue
-		}
 		for _, f := range b.ConfigFields() {
 			fmt.Fprintf(&buf, "%s = %q\n", f.Key, existingParams[name][f.Key])
 		}
