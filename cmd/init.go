@@ -124,7 +124,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 					}
 					fmt.Print("：")
 					val := readLine(reader)
-					if val == "" {
+					if val == "" && suggestion != "" {
 						fmt.Printf("使用默认值：%s\n", suggestion)
 						val = suggestion
 					}
