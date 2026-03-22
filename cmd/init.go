@@ -158,7 +158,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 
 		fmt.Println()
 		fmt.Print("继续配置另一个后端？[y/N] ")
-		if !confirmYes() {
+		if !confirmYes(reader) {
 			break
 		}
 		fmt.Println()
@@ -181,7 +181,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if err := os.WriteFile(cfgPath, []byte(buf.String()), 0o644); err != nil {
+	if err := os.WriteFile(cfgPath, []byte(buf.String()), 0o600); err != nil {
 		return fmt.Errorf("写入配置失败: %w", err)
 	}
 
@@ -194,15 +194,4 @@ func runInit(cmd *cobra.Command, args []string) error {
 	fmt.Printf("示例配置: %s\n", filepath.Join(dir, "config.example.toml"))
 	fmt.Println("现在可以运行 gpg-unlock 来加载密码短语了")
 	return nil
-}
-
-func readLine(r *bufio.Reader) string {
-	line, _ := r.ReadString('\n')
-	return strings.TrimSpace(line)
-}
-
-func confirmYes() bool {
-	reader := bufio.NewReader(os.Stdin)
-	line := readLine(reader)
-	return strings.EqualFold(line, "y") || strings.EqualFold(line, "yes")
 }

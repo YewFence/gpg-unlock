@@ -34,6 +34,8 @@ func runEdit(cmd *cobra.Command, args []string) error {
 
 	if _, err := os.Stat(cfgPath); os.IsNotExist(err) {
 		return fmt.Errorf("配置文件不存在: %s\n请先运行 gpg-unlock init 创建配置", cfgPath)
+	} else if err != nil {
+		return fmt.Errorf("无法访问配置文件 %s: %w", cfgPath, err)
 	}
 
 	editor := os.Getenv("EDITOR")
@@ -48,8 +50,11 @@ func runEdit(cmd *cobra.Command, args []string) error {
 	}
 
 	parts, err := shlex.Split(editor)
-	if err != nil || len(parts) == 0 {
+	if err != nil {
 		return fmt.Errorf("EDITOR 解析失败: %w", err)
+	}
+	if len(parts) == 0 {
+		return fmt.Errorf("EDITOR 解析结果为空")
 	}
 
 	editorArgs := append(parts[1:], cfgPath)

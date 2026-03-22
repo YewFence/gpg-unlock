@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 
@@ -34,7 +35,8 @@ func runReset(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("将删除配置目录: %s\n", dir)
 	fmt.Print("确认删除？[y/N] ")
-	if !confirmYes() {
+	reader := bufio.NewReader(os.Stdin)
+	if !confirmYes(reader) {
 		fmt.Println("已取消")
 		return nil
 	}
