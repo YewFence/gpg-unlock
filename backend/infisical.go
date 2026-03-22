@@ -18,30 +18,48 @@ func (i *Infisical) Name() string { return "infisical" }
 
 func (i *Infisical) ConfigFields() []ConfigField {
 	return []ConfigField{
-		{Key: "command", Prompt: "CLI 命令 (command, 默认 infisical)", Required: false},
-		{Key: "secret_name", Prompt: "Secret 名称 (secret_name)", Required: true},
-		{Key: "project_dir", Prompt: "项目目录路径 (project_dir, 含 .infisical.json)", Required: false},
-		{Key: "project_id", Prompt: "项目 ID (project_id, 与 project_dir 二选一)", Required: false},
-		{Key: "environment", Prompt: "环境 (environment, 如 dev/staging/prod)", Required: false},
-		{Key: "secret_path", Prompt: "Secret 路径 (secret_path, 默认 /)", Required: false},
-		{Key: "domain", Prompt: "自架实例域名 (domain, 如 https://infisical.example.com)", Required: false},
-		{Key: "token", Prompt: "Access Token (token, 用于 CI/CD)", Required: false},
+		{Key: "command", Prompt: "CLI 命令（command）", Required: false, Example: "infisical", Comment: "Infisical CLI 命令（与 docker_image 二选一）", DefaultValue: "infisical"},
+		{Key: "docker_image", Prompt: "Docker 镜像名称 (docker_image, 非空则通过 docker run 调用)", Required: false, Example: "infisical/cli:latest", Comment: "设置后用 docker run <image> 代替本地 infisical 命令"},
+		{Key: "secret_name", Prompt: "Secret 名称 (secret_name)", Required: true, Example: "GPG_PASSPHRASE", Comment: "Secret 名称"},
+		{Key: "project_dir", Prompt: "项目目录路径 (project_dir，与 project_id 二选一)", Required: false, Example: "/path/to/project", Comment: "含 .infisical.json 的项目目录（与 project_id 二选一）"},
+		{Key: "project_id", Prompt: "项目 ID (project_id, 与 project_dir 二选一)", Required: false, Example: "fcxxxxx-xxxx-xxxx-xxxx-xxxxxxxx", Comment: "项目 ID（与 project_dir 二选一）"},
+		{Key: "environment", Prompt: "环境 (environment, 如 dev/staging/prod)", Required: false, Example: "dev", Comment: "环境，如 dev/staging/prod", DefaultValue: "dev"},
+		{Key: "secret_path", Prompt: "Secret 路径", Required: false, Example: "/", Comment: "Secret 路径", DefaultValue: "/"},
+		{Key: "domain", Prompt: "Infisical 实例域名 (domain)", Required: false, Example: "https://app.infisical.com", Comment: "Infisical 实例域名", DefaultValue: "https://app.infisical.com"},
+		{Key: "token", Prompt: "Access Token (token, 用于 CI/CD)", Required: false, Example: "", Comment: "Access Token，用于 CI/CD"},
 	}
 }
 
-func (i *Infisical) GetPassphrase(params map[string]string) (string, error) {
-	secretName := params["secret_name"]
-	if secretName == "" {
-		return "", fmt.Errorf("infisical 后端需要 secret_name 参数")
+func (i *Infisical) ValidateConfig(params map[string]string) []error {
+	var errs []error
+	if params["secret_name"] == "" {
+		errs = append(errs, fmt.Errorf("secret_name 不能为空"))
 	}
-
-	bin := params["command"]
-	if bin == "" {
-		bin = "infisical"
+	if params["project_dir"] == "" && params["project_id"] == "" {
+		errs = append(errs, fmt.Errorf("project_dir 和 project_id 至少需要填写一个"))
 	}
+	return errs
+}
 
+func (i *Infisical) FormatConfig(params map[string]string) map[string]string {
+	out := make(map[string]string, len(params))
+	for k, v := range params {
+		out[k] = v
+	}
+	if v := out["domain"]; v != "" {
+		out["domain"] = strings.TrimRight(v, "/")
+	}
+	if v := out["project_dir"]; v != "" {
+		out["project_dir"] = strings.TrimRight(v, "/\\")
+	}
+	if v := out["secret_path"]; v != "" && !strings.HasPrefix(v, "/") {
+		out["secret_path"] = "/" + v
+	}
+	return out
+}
+
+func buildInfisicalArgs(secretName string, params map[string]string) []string {
 	args := []string{"secrets", "get", secretName, "--plain"}
-
 	if v := params["domain"]; v != "" {
 		args = append(args, "--domain", v)
 	}
@@ -57,17 +75,39 @@ func (i *Infisical) GetPassphrase(params map[string]string) (string, error) {
 	if v := params["token"]; v != "" {
 		args = append(args, "--token", v)
 	}
+	return args
+}
 
-	cmd := exec.Command(bin, args...)
-	cmd.Stderr = os.Stderr
+func (i *Infisical) GetPassphrase(params map[string]string) (string, error) {
+	secretName := params["secret_name"]
 
-	if dir := params["project_dir"]; dir != "" {
-		cmd.Dir = dir
+	infisicalArgs := buildInfisicalArgs(secretName, params)
+
+	var cmd *exec.Cmd
+	if dockerImage := params["docker_image"]; dockerImage != "" {
+		dockerArgs := []string{"run", "--rm"}
+		if projectDir := params["project_dir"]; projectDir != "" {
+			dockerArgs = append(dockerArgs, "-v", projectDir+":"+projectDir, "-w", projectDir)
+		}
+		dockerArgs = append(dockerArgs, dockerImage)
+		dockerArgs = append(dockerArgs, infisicalArgs...)
+		cmd = exec.Command("docker", dockerArgs...)
+	} else {
+		bin := params["command"]
+		if bin == "" {
+			bin = "infisical"
+		}
+		cmd = exec.Command(bin, infisicalArgs...)
+		if dir := params["project_dir"]; dir != "" {
+			cmd.Dir = dir
+		}
 	}
+
+	cmd.Stderr = os.Stderr
 
 	out, err := cmd.Output()
 	if err != nil {
-		return "", fmt.Errorf("%s secrets get %q 失败: %w", bin, secretName, err)
+		return "", fmt.Errorf("infisical secrets get %q 失败: %w", secretName, err)
 	}
 
 	passphrase := strings.TrimSpace(string(out))

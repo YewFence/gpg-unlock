@@ -7,6 +7,10 @@ type ConfigField struct {
 	Key      string // TOML 键名
 	Prompt   string // 交互提示文本
 	Required bool
+	Example  string // 示例值，用于生成 example 配置
+	Comment  string // 字段说明，生成为注释行
+	// 理论上不应该有字段同时为必填又有默认值，因为默认值会自动填充此时必填校验永远不会触发
+	DefaultValue string // 默认值提示，用于 init 引导
 }
 
 // Backend 定义密码获取接口
@@ -15,6 +19,10 @@ type Backend interface {
 	Name() string
 	// ConfigFields 返回该后端所需的配置字段（用于 init 向导）
 	ConfigFields() []ConfigField
+	// ValidateConfig 校验配置参数，返回所有校验错误
+	ValidateConfig(params map[string]string) []error
+	// FormatConfig 格式化配置参数，返回规范化后的副本
+	FormatConfig(params map[string]string) map[string]string
 	// GetPassphrase 从密码管理器获取 GPG 密码短语
 	GetPassphrase(params map[string]string) (string, error)
 }

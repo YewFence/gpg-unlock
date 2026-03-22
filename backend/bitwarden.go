@@ -19,18 +19,34 @@ func (b *Bitwarden) Name() string { return "bitwarden" }
 
 func (b *Bitwarden) ConfigFields() []ConfigField {
 	return []ConfigField{
-		{Key: "command", Prompt: "CLI 命令 (command, 默认 bw)", Required: false},
-		{Key: "item_name", Prompt: "Bitwarden 项目名称 (item_name)", Required: true},
-		{Key: "field_name", Prompt: "字段名称 (field_name)", Required: true},
+		{Key: "command", Prompt: "CLI 命令 (command)", Required: false, Example: "bw", Comment: "Bitwarden CLI 命令，支持生物认证可改为 bwbio", DefaultValue: "bw"},
+		{Key: "item_name", Prompt: "Bitwarden 项目名称 (item_name)", Required: true, Example: "GPG", Comment: "Bitwarden 中存储 GPG 密码短语的项目名称"},
+		{Key: "field_name", Prompt: "字段名称 (field_name)", Required: true, Example: "passphrase", Comment: "项目中存储密码短语的自定义字段名"},
 	}
+}
+
+func (b *Bitwarden) ValidateConfig(params map[string]string) []error {
+	var errs []error
+	if params["item_name"] == "" {
+		errs = append(errs, fmt.Errorf("item_name 不能为空"))
+	}
+	if params["field_name"] == "" {
+		errs = append(errs, fmt.Errorf("field_name 不能为空"))
+	}
+	return errs
+}
+
+func (b *Bitwarden) FormatConfig(params map[string]string) map[string]string {
+	out := make(map[string]string, len(params))
+	for k, v := range params {
+		out[k] = v
+	}
+	return out
 }
 
 func (b *Bitwarden) GetPassphrase(params map[string]string) (string, error) {
 	itemName := params["item_name"]
 	fieldName := params["field_name"]
-	if itemName == "" || fieldName == "" {
-		return "", fmt.Errorf("bitwarden 后端需要 item_name 和 field_name 参数")
-	}
 
 	bin := params["command"]
 	if bin == "" {

@@ -150,6 +150,29 @@ gpg-unlock --force
 - 怀疑缓存状态异常
 - 需要确保使用最新密码
 
+### 指定后端
+
+```bash
+gpg-unlock --backend bitwarden
+# 或使用简写
+gpg-unlock -b infisical
+```
+
+运行时指定使用的后端，覆盖配置文件中的默认值。适用于：
+- 配置了多个后端，需要临时切换
+- 测试不同后端的配置
+
+### 编辑配置
+
+```bash
+gpg-unlock edit
+```
+
+使用默认编辑器打开配置文件进行编辑。编辑器优先级：
+1. `$EDITOR` 环境变量指定的编辑器
+2. `vi`（Linux/macOS）
+3. `notepad`（Windows）
+
 ## 贡献新后端
 
 欢迎为其他密码管理器贡献后端实现！本项目的后端接口设计简洁，易于扩展。
@@ -157,9 +180,10 @@ gpg-unlock --force
 ### 如何添加新后端
 
 1. 在 `backend/` 目录下创建新文件（如 `backend/yourmanager.go`）
-2. 实现 `Backend` interface（只需实现 `GetPassphrase(params map[string]string) (string, error)` 方法）
-3. 在 `init()` 函数中调用 `Register("backend-name", &YourBackend{})` 注册后端
-4. 更新 README 和配置示例
+2. 实现 `Backend` interface：具体要求与说明请参考[代码中的注释](backend/backend.go)
+3. 在 `init()` 函数中调用 `Register(&YourBackend{})` 注册后端
+4. 运行 `gpg-unlock gen-example` 重新生成 `config.example.toml`
+5. 更新 README
 
 可以参考现有的 [Bitwarden](./backend/bitwarden.go) 和 [Infisical](./backend/infisical.go) 后端实现。
 

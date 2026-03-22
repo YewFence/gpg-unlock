@@ -1,0 +1,11 @@
+pre-commit:
+  commands:
+    gen-example:
+      glob: "**/*.go"
+      run: go run . gen-example && git add config.example.toml
+    vet:
+      glob: "**/*.go"
+      run: go vet ./...
+    fmt:
+      glob: "**/*.go"
+      run: go fmt ./...

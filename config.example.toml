@@ -1,32 +1,34 @@
-# gpg-unlock 配置示例
-# 复制此文件到以下任一位置并修改：
+# 此文件由 gpg-unlock 自动生成，仅供参考，请勿直接使用。
+# 复制为 config.toml 并按需修改：
 #   Linux/macOS: ~/.config/gpg-unlock/config.toml
-#   Windows:     %APPDATA%/gpg-unlock/config.toml
+#   Windows:     %APPDATA%\gpg-unlock\config.toml
 
-# 使用的密码管理器后端
 backend = "bitwarden"
 
-# Bitwarden 后端配置
 [backends.bitwarden]
-# CLI 命令，推荐使用支持生物认证的 bwbio
-# https://github.com/jeanregisser/bitwarden-cli-bio
-# 默认为 "bw"（官方 CLI）
-command = "bwbio"
+# Bitwarden CLI 命令，支持生物认证可改为 bwbio
+# command = "bw"
+# Bitwarden 中存储 GPG 密码短语的项目名称
 item_name = "GPG"
+# 项目中存储密码短语的自定义字段名
 field_name = "passphrase"
 
-# Infisical 后端配置
-# [backends.infisical]
-# secret_name = "GPG_PASSPHRASE"
+[backends.infisical]
+# Infisical CLI 命令（与 docker_image 二选一）
+# command = "infisical"
+# 设置后用 docker run <image> 代替本地 infisical 命令
+# docker_image = "infisical/cli:latest"
+# Secret 名称
+secret_name = "GPG_PASSPHRASE"
 # 含 .infisical.json 的项目目录（与 project_id 二选一）
-# project_dir = "/path/to/my-project"
-# 或直接指定项目 ID
-# project_id = ""
-# 环境，默认 dev
-# environment = ""
-# Secret 路径，默认 /
-# secret_path = ""
-# 自架实例域名（可选）
-# domain = "https://infisical.example.com"
-# Access Token（CI/CD 场景）
+# project_dir = "/path/to/project"
+# 项目 ID（与 project_dir 二选一）
+# project_id = "fcxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"
+# 环境，如 dev/staging/prod
+# environment = "dev"
+# Secret 路径
+# secret_path = "/"
+# Infisical 实例域名
+# domain = "https://app.infisical.com"
+# Access Token，用于 CI/CD
 # token = ""
