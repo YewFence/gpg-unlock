@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"fmt"
@@ -14,11 +14,11 @@ type Config struct {
 	Backends map[string]map[string]string `toml:"backends"`
 }
 
-// loadConfig 从指定路径或默认位置加载配置
-func loadConfig(path string) (*Config, error) {
+// Load 从指定路径或默认位置加载配置
+func Load(path string) (*Config, error) {
 	if path == "" {
 		var err error
-		path, err = findConfigFile()
+		path, err = FindFile()
 		if err != nil {
 			return nil, err
 		}
@@ -36,9 +36,9 @@ func loadConfig(path string) (*Config, error) {
 	return &cfg, nil
 }
 
-// findConfigFile 按优先级查找配置文件
-func findConfigFile() (string, error) {
-	candidates := configPaths()
+// FindFile 按优先级查找配置文件
+func FindFile() (string, error) {
+	candidates := Paths()
 	for _, p := range candidates {
 		if _, err := os.Stat(p); err == nil {
 			return p, nil
@@ -47,8 +47,8 @@ func findConfigFile() (string, error) {
 	return "", fmt.Errorf("未找到配置文件，请运行 gpg-unlock init 创建配置\n  预期路径: %s", candidates[0])
 }
 
-// configDir 返回配置目录路径（统一使用 ~/.config/gpg-unlock）
-func configDir() string {
+// Dir 返回配置目录路径（统一使用 ~/.config/gpg-unlock）
+func Dir() string {
 	if xdg := os.Getenv("XDG_CONFIG_HOME"); xdg != "" {
 		return filepath.Join(xdg, "gpg-unlock")
 	}
@@ -58,9 +58,9 @@ func configDir() string {
 	return ""
 }
 
-// configPaths 返回配置文件候选路径
-func configPaths() []string {
-	dir := configDir()
+// Paths 返回配置文件候选路径
+func Paths() []string {
+	dir := Dir()
 	if dir == "" {
 		return nil
 	}

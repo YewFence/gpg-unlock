@@ -1,4 +1,4 @@
-package main
+package gpg
 
 import (
 	"fmt"
@@ -10,8 +10,8 @@ import (
 	"time"
 )
 
-// getKeygrips 获取所有 GPG 私钥的 keygrip，带重试
-func getKeygrips() ([]string, error) {
+// GetKeygrips 获取所有 GPG 私钥的 keygrip，带重试
+func GetKeygrips() ([]string, error) {
 	for i := 0; i < 3; i++ {
 		out, err := exec.Command("gpg", "--with-keygrip", "-K").Output()
 		if err == nil {
@@ -40,8 +40,8 @@ func getKeygrips() ([]string, error) {
 	return nil, fmt.Errorf("无法获取 GPG 密钥的 keygrip，请确保已创建 GPG 密钥")
 }
 
-// presetPassphrase 将密码短语注入 gpg-agent（对所有 keygrip）
-func presetPassphrase(keygrips []string, passphrase string) error {
+// PresetPassphrase 将密码短语注入 gpg-agent（对所有 keygrip）
+func PresetPassphrase(keygrips []string, passphrase string) error {
 	presetCmd := findPresetCommand()
 	if presetCmd != "" {
 		for _, kg := range keygrips {
@@ -59,7 +59,6 @@ func presetPassphrase(keygrips []string, passphrase string) error {
 	return loopbackSign(passphrase)
 }
 
-// loopbackSign 使用 loopback 模式缓存密码短语
 func loopbackSign(passphrase string) error {
 	cmd := exec.Command("gpg", "--batch", "--yes", "--passphrase-fd", "0", "--pinentry-mode", "loopback", "-s", "-o", os.DevNull, os.DevNull)
 	cmd.Stdin = strings.NewReader(passphrase)
@@ -70,7 +69,6 @@ func loopbackSign(passphrase string) error {
 	return nil
 }
 
-// findPresetCommand 在 PATH 和常见路径查找 gpg-preset-passphrase
 func findPresetCommand() string {
 	if p, err := exec.LookPath("gpg-preset-passphrase"); err == nil {
 		return p
@@ -101,17 +99,15 @@ func findPresetCommand() string {
 	return ""
 }
 
-// checkKeygripCached 检查指定 keygrip 的密码短语是否已缓存
-func checkKeygripCached(keygrip string) bool {
+// CheckKeygripCached 检查指定 keygrip 的密码短语是否已缓存
+func CheckKeygripCached(keygrip string) bool {
 	cmd := exec.Command("gpg-connect-agent")
 	cmd.Stdin = strings.NewReader(fmt.Sprintf("KEYINFO %s\n", keygrip))
 	out, err := cmd.Output()
 	if err != nil {
-		return false // 检测失败视为未缓存（保守策略）
+		return false
 	}
 
-	// 解析输出：S KEYINFO <keygrip> <type> <serialno> <idstr> <cached> ...
-	// 第 7 个字段（索引 6）：1=已缓存，-=未缓存
 	for _, line := range strings.Split(string(out), "\n") {
 		line = strings.TrimSpace(line)
 		if strings.HasPrefix(line, "S KEYINFO") {
@@ -124,12 +120,12 @@ func checkKeygripCached(keygrip string) bool {
 	return false
 }
 
-// checkAllKeygripsCached 检查所有 keygrip 是否都已缓存
+// CheckAllKeygripsCached 检查所有 keygrip 是否都已缓存
 // 返回 (已缓存数量, 总数量)
-func checkAllKeygripsCached(keygrips []string) (int, int) {
+func CheckAllKeygripsCached(keygrips []string) (int, int) {
 	cached := 0
 	for _, kg := range keygrips {
-		if checkKeygripCached(kg) {
+		if CheckKeygripCached(kg) {
 			cached++
 		}
 	}

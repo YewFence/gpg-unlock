@@ -1,4 +1,4 @@
-package main
+package example
 
 import (
 	"fmt"
@@ -10,17 +10,8 @@ import (
 	"github.com/YewFence/gpg-unlock/backend"
 )
 
-func runGenExample() {
-	// 生成到当前工作目录（项目根目录）
-	dir := "."
-	if err := generateExampleConfig(dir); err != nil {
-		fmt.Fprintf(os.Stderr, "错误: %v\n", err)
-		os.Exit(1)
-	}
-	fmt.Printf("示例配置已写入: %s\n", filepath.Join(dir, "config.example.toml"))
-}
-
-func generateExampleConfig(dir string) error {
+// Generate 在指定目录下生成 config.example.toml
+func Generate(dir string) error {
 	names := backend.Names()
 	sort.Strings(names)
 
