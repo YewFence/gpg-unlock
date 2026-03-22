@@ -8,23 +8,35 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/YewFence/gpg-unlock/backend"
 	"github.com/YewFence/gpg-unlock/internal/config"
 	"github.com/YewFence/gpg-unlock/internal/example"
 )
 
-func runInit() {
+var initCmd = &cobra.Command{
+	Use:   "init",
+	Short: "交互式配置向导",
+	Long:  "通过交互式问答创建或更新 gpg-unlock 配置文件。",
+	Args:  cobra.NoArgs,
+	RunE:  runInit,
+}
+
+func init() {
+	rootCmd.AddCommand(initCmd)
+}
+
+func runInit(cmd *cobra.Command, args []string) error {
 	dir := config.Dir()
 	if dir == "" {
-		fmt.Fprintln(os.Stderr, "错误: 无法确定配置目录（HOME 未设置）")
-		os.Exit(1)
+		return fmt.Errorf("无法确定配置目录（HOME 未设置）")
 	}
 
 	cfgPath := filepath.Join(dir, "config.toml")
 
 	if err := os.MkdirAll(dir, 0o755); err != nil {
-		fmt.Fprintf(os.Stderr, "错误: 创建目录失败: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("创建目录失败: %w", err)
 	}
 
 	// 尝试加载现有配置
@@ -132,8 +144,7 @@ func runInit() {
 	}
 
 	if err := os.WriteFile(cfgPath, []byte(buf.String()), 0o644); err != nil {
-		fmt.Fprintf(os.Stderr, "错误: 写入配置失败: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("写入配置失败: %w", err)
 	}
 
 	if err := example.Generate(dir); err != nil {
@@ -144,6 +155,7 @@ func runInit() {
 	fmt.Printf("配置已写入: %s\n", cfgPath)
 	fmt.Printf("示例配置: %s\n", filepath.Join(dir, "config.example.toml"))
 	fmt.Println("现在可以运行 gpg-unlock 来加载密码短语了")
+	return nil
 }
 
 func readLine(r *bufio.Reader) string {

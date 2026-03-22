@@ -7,22 +7,33 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/YewFence/gpg-unlock/internal/config"
 )
 
-func runEdit() {
+var editCmd = &cobra.Command{
+	Use:   "edit",
+	Short: "用编辑器打开配置文件",
+	Long:  "使用 $EDITOR 环境变量指定的编辑器打开配置文件进行编辑。",
+	Args:  cobra.NoArgs,
+	RunE:  runEdit,
+}
+
+func init() {
+	rootCmd.AddCommand(editCmd)
+}
+
+func runEdit(cmd *cobra.Command, args []string) error {
 	dir := config.Dir()
 	if dir == "" {
-		fmt.Fprintln(os.Stderr, "错误: 无法确定配置目录（HOME 未设置）")
-		os.Exit(1)
+		return fmt.Errorf("无法确定配置目录（HOME 未设置）")
 	}
 
 	cfgPath := filepath.Join(dir, "config.toml")
 
 	if _, err := os.Stat(cfgPath); os.IsNotExist(err) {
-		fmt.Fprintf(os.Stderr, "错误: 配置文件不存在: %s\n", cfgPath)
-		fmt.Fprintln(os.Stderr, "请先运行 gpg-unlock init 创建配置")
-		os.Exit(1)
+		return fmt.Errorf("配置文件不存在: %s\n请先运行 gpg-unlock init 创建配置", cfgPath)
 	}
 
 	editor := os.Getenv("EDITOR")
@@ -32,25 +43,23 @@ func runEdit() {
 		} else if _, err := exec.LookPath("notepad"); err == nil {
 			editor = "notepad"
 		} else {
-			fmt.Fprintln(os.Stderr, "错误: 未设置 EDITOR 环境变量，且未找到 vi 或 notepad")
-			os.Exit(1)
+			return fmt.Errorf("未设置 EDITOR 环境变量，且未找到 vi 或 notepad")
 		}
 	}
 
 	parts := strings.Fields(editor)
 	if len(parts) == 0 {
-		fmt.Fprintln(os.Stderr, "错误: EDITOR 环境变量为空")
-		os.Exit(1)
+		return fmt.Errorf("EDITOR 环境变量为空")
 	}
 
-	args := append(parts[1:], cfgPath)
-	c := exec.Command(parts[0], args...)
+	editorArgs := append(parts[1:], cfgPath)
+	c := exec.Command(parts[0], editorArgs...)
 	c.Stdin = os.Stdin
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
 
 	if err := c.Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "错误: 启动编辑器失败: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("启动编辑器失败: %w", err)
 	}
+	return nil
 }

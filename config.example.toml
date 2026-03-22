@@ -14,19 +14,21 @@ item_name = "GPG"
 field_name = "passphrase"
 
 [backends.infisical]
-# Infisical CLI 命令
+# Infisical CLI 命令（与 docker_image 二选一）
 # command = "infisical"
-# Secret 名称（必填）
+# 设置后用 docker run <image> 代替本地 infisical 命令
+# docker_image = "infisical/cli"
+# Secret 名称
 secret_name = "GPG_PASSPHRASE"
 # 含 .infisical.json 的项目目录（与 project_id 二选一）
 # project_dir = "/path/to/project"
 # 项目 ID（与 project_dir 二选一）
-# project_id = ""
+# project_id = "fcxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"
 # 环境，如 dev/staging/prod
 # environment = "dev"
-# Secret 路径，默认 /
+# Secret 路径
 # secret_path = "/"
-# 自架实例域名
-# domain = "https://infisical.example.com"
+# Infisical 实例域名
+# domain = "https://app.infisical.com"
 # Access Token，用于 CI/CD
 # token = ""

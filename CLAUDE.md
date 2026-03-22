@@ -6,7 +6,7 @@
 
 - `main.go` — 极简入口，仅调用 `cmd.Execute()`
 - `cmd/` — CLI 子命令与主流程
-  - `root.go` — flag 解析 + 默认 unlock 流程
+  - `root.go` — cobra rootCmd 定义 + 默认 unlock 流程
   - `init.go` — 交互式配置向导
   - `reset.go` / `edit.go` / `genexample.go` — 各子命令
 - `internal/config/` — Config 结构体、TOML 加载、XDG 路径查找
@@ -25,8 +25,8 @@
 
 ## 开发约定
 
-- 外部依赖尽量少，目前仅 `github.com/BurntSushi/toml`
-- CLI 用标准库 `flag`，不引入 cobra 等
+- 外部依赖尽量少，目前有 `github.com/BurntSushi/toml` 和 `github.com/spf13/cobra`
+- CLI 使用 cobra 框架，子命令在各自文件的 `init()` 中通过 `rootCmd.AddCommand()` 注册
 - 新增后端：在 `backend/` 下新建文件，实现 `Backend` interface，`init()` 中调用 `Register()`
 - 配置格式为 TOML，结构体在 `internal/config/config.go` 中定义
 - 后端参数统一用 `map[string]string`，各后端自行校验所需字段
