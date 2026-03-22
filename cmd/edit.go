@@ -5,8 +5,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
+	"github.com/google/shlex"
 	"github.com/spf13/cobra"
 
 	"github.com/YewFence/gpg-unlock/internal/config"
@@ -47,9 +47,9 @@ func runEdit(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	parts := strings.Fields(editor)
-	if len(parts) == 0 {
-		return fmt.Errorf("EDITOR 环境变量为空")
+	parts, err := shlex.Split(editor)
+	if err != nil || len(parts) == 0 {
+		return fmt.Errorf("EDITOR 解析失败: %w", err)
 	}
 
 	editorArgs := append(parts[1:], cfgPath)
