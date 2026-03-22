@@ -19,7 +19,7 @@ func (i *Infisical) Name() string { return "infisical" }
 func (i *Infisical) ConfigFields() []ConfigField {
 	return []ConfigField{
 		{Key: "command", Prompt: "CLI 命令（command）", Required: false, Example: "infisical", Comment: "Infisical CLI 命令（与 docker_image 二选一）", DefaultValue: "infisical"},
-		{Key: "docker_image", Prompt: "Docker 镜像名称 (docker_image, 非空则通过 docker run 调用)", Required: false, Example: "infisical/cli", Comment: "设置后用 docker run <image> 代替本地 infisical 命令"},
+		{Key: "docker_image", Prompt: "Docker 镜像名称 (docker_image, 非空则通过 docker run 调用)", Required: false, Example: "infisical/cli:latest", Comment: "设置后用 docker run <image> 代替本地 infisical 命令"},
 		{Key: "secret_name", Prompt: "Secret 名称 (secret_name)", Required: true, Example: "GPG_PASSPHRASE", Comment: "Secret 名称"},
 		{Key: "project_dir", Prompt: "项目目录路径 (project_dir，与 project_id 二选一)", Required: false, Example: "/path/to/project", Comment: "含 .infisical.json 的项目目录（与 project_id 二选一）"},
 		{Key: "project_id", Prompt: "项目 ID (project_id, 与 project_dir 二选一)", Required: false, Example: "fcxxxxx-xxxx-xxxx-xxxx-xxxxxxxx", Comment: "项目 ID（与 project_dir 二选一）"},

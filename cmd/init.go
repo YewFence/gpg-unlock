@@ -112,6 +112,8 @@ func runInit(cmd *cobra.Command, args []string) error {
 						fmt.Printf("使用默认值：%s\n", suggestion)
 						val = suggestion
 					}
+					// 此处默认值和必填的语义会有些歧义，需要注意
+					// 理论上不应该有字段同时为必填又有默认值，因为默认值会自动填充此时必填校验永远不会触发
 					if f.Required && val == "" {
 						fmt.Fprintf(os.Stderr, "错误: %s 不能为空\n", f.Key)
 						continue
