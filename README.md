@@ -180,10 +180,7 @@ gpg-unlock edit
 ### 如何添加新后端
 
 1. 在 `backend/` 目录下创建新文件（如 `backend/yourmanager.go`）
-2. 实现 `Backend` interface：
-   - `Name() string` — 后端名称
-   - `ConfigFields() []ConfigField` — 配置字段列表，每个字段需填写 `Key`、`Prompt`、`Required`、`Example`、`Comment`
-   - `GetPassphrase(params map[string]string) (string, error)` — 获取密码短语
+2. 实现 `Backend` interface：具体要求与说明请参考[代码中的注释](backend/backend.go)
 3. 在 `init()` 函数中调用 `Register(&YourBackend{})` 注册后端
 4. 运行 `gpg-unlock gen-example` 重新生成 `config.example.toml`
 5. 更新 README
