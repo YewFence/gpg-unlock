@@ -186,7 +186,14 @@ func runInit() {
 		params := map[string]string{}
 		for _, f := range b.ConfigFields() {
 			for {
-				fmt.Printf("%s: ", f.Prompt)
+				fmt.Printf("%s; 示例： %s", f.Prompt, f.Example)
+				if f.DefaultValue != "" {
+					fmt.Printf("(默认: %s) ", f.DefaultValue)
+				}
+				if f.Required {
+					fmt.Print("（必填） ")
+				}
+				fmt.Print("：")
 				val := readLine(reader)
 				if f.Required && val == "" {
 					fmt.Fprintf(os.Stderr, "错误: %s 不能为空\n", f.Key)

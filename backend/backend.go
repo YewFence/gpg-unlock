@@ -4,11 +4,12 @@ import "fmt"
 
 // ConfigField 描述后端需要的一个配置字段
 type ConfigField struct {
-	Key      string // TOML 键名
-	Prompt   string // 交互提示文本
-	Required bool
-	Example  string // 示例值，用于生成 example 配置
-	Comment  string // 字段说明，生成为注释行
+	Key          string // TOML 键名
+	Prompt       string // 交互提示文本
+	Required     bool
+	Example      string // 示例值，用于生成 example 配置
+	Comment      string // 字段说明，生成为注释行
+	DefaultValue string // 默认值提示，用于 init 引导
 }
 
 // Backend 定义密码获取接口

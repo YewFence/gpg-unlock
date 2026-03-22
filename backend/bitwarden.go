@@ -19,7 +19,7 @@ func (b *Bitwarden) Name() string { return "bitwarden" }
 
 func (b *Bitwarden) ConfigFields() []ConfigField {
 	return []ConfigField{
-		{Key: "command", Prompt: "CLI 命令 (command, 默认 bw)", Required: false, Example: "bw", Comment: "Bitwarden CLI 命令，支持生物认证可改为 bwbio"},
+		{Key: "command", Prompt: "CLI 命令 (command)", Required: false, Example: "bw", Comment: "Bitwarden CLI 命令，支持生物认证可改为 bwbio", DefaultValue: "bw"},
 		{Key: "item_name", Prompt: "Bitwarden 项目名称 (item_name)", Required: true, Example: "GPG", Comment: "Bitwarden 中存储 GPG 密码短语的项目名称"},
 		{Key: "field_name", Prompt: "字段名称 (field_name)", Required: true, Example: "passphrase", Comment: "项目中存储密码短语的自定义字段名"},
 	}
