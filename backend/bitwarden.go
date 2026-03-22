@@ -25,12 +25,28 @@ func (b *Bitwarden) ConfigFields() []ConfigField {
 	}
 }
 
+func (b *Bitwarden) ValidateConfig(params map[string]string) []error {
+	var errs []error
+	if params["item_name"] == "" {
+		errs = append(errs, fmt.Errorf("item_name 不能为空"))
+	}
+	if params["field_name"] == "" {
+		errs = append(errs, fmt.Errorf("field_name 不能为空"))
+	}
+	return errs
+}
+
+func (b *Bitwarden) FormatConfig(params map[string]string) map[string]string {
+	out := make(map[string]string, len(params))
+	for k, v := range params {
+		out[k] = v
+	}
+	return out
+}
+
 func (b *Bitwarden) GetPassphrase(params map[string]string) (string, error) {
 	itemName := params["item_name"]
 	fieldName := params["field_name"]
-	if itemName == "" || fieldName == "" {
-		return "", fmt.Errorf("bitwarden 后端需要 item_name 和 field_name 参数")
-	}
 
 	bin := params["command"]
 	if bin == "" {

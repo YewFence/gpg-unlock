@@ -18,6 +18,10 @@ type Backend interface {
 	Name() string
 	// ConfigFields 返回该后端所需的配置字段（用于 init 向导）
 	ConfigFields() []ConfigField
+	// ValidateConfig 校验配置参数，返回所有校验错误
+	ValidateConfig(params map[string]string) []error
+	// FormatConfig 格式化配置参数，返回规范化后的副本
+	FormatConfig(params map[string]string) map[string]string
 	// GetPassphrase 从密码管理器获取 GPG 密码短语
 	GetPassphrase(params map[string]string) (string, error)
 }

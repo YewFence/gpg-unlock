@@ -71,6 +71,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	// 格式化并校验配置
+	params = b.FormatConfig(params)
+	if errs := b.ValidateConfig(params); len(errs) > 0 {
+		fmt.Fprintln(os.Stderr, "配置校验失败:")
+		for _, e := range errs {
+			fmt.Fprintf(os.Stderr, "  - %v\n", e)
+		}
+		os.Exit(1)
+	}
+
 	fmt.Println("=== GPG 密码短语加载器 ===")
 	fmt.Printf("后端: %s\n\n", cfg.Backend)
 
@@ -204,7 +214,7 @@ func runInit() {
 			}
 		}
 
-		existingParams[chosen] = params
+		existingParams[chosen] = b.FormatConfig(params)
 		if existingBackend == "" {
 			existingBackend = chosen
 		}

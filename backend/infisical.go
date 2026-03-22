@@ -30,6 +30,34 @@ func (i *Infisical) ConfigFields() []ConfigField {
 	}
 }
 
+func (i *Infisical) ValidateConfig(params map[string]string) []error {
+	var errs []error
+	if params["secret_name"] == "" {
+		errs = append(errs, fmt.Errorf("secret_name 不能为空"))
+	}
+	if params["project_dir"] == "" && params["project_id"] == "" {
+		errs = append(errs, fmt.Errorf("project_dir 和 project_id 至少需要填写一个"))
+	}
+	return errs
+}
+
+func (i *Infisical) FormatConfig(params map[string]string) map[string]string {
+	out := make(map[string]string, len(params))
+	for k, v := range params {
+		out[k] = v
+	}
+	if v := out["domain"]; v != "" {
+		out["domain"] = strings.TrimRight(v, "/")
+	}
+	if v := out["project_dir"]; v != "" {
+		out["project_dir"] = strings.TrimRight(v, "/\\")
+	}
+	if v := out["secret_path"]; v != "" && !strings.HasPrefix(v, "/") {
+		out["secret_path"] = "/" + v
+	}
+	return out
+}
+
 func buildInfisicalArgs(secretName string, params map[string]string) []string {
 	args := []string{"secrets", "get", secretName, "--plain"}
 	if v := params["domain"]; v != "" {
@@ -52,9 +80,6 @@ func buildInfisicalArgs(secretName string, params map[string]string) []string {
 
 func (i *Infisical) GetPassphrase(params map[string]string) (string, error) {
 	secretName := params["secret_name"]
-	if secretName == "" {
-		return "", fmt.Errorf("infisical 后端需要 secret_name 参数")
-	}
 
 	infisicalArgs := buildInfisicalArgs(secretName, params)
 
