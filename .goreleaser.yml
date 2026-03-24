@@ -46,6 +46,7 @@ brews:
       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
     homepage: "https://github.com/YewFence/gpg-unlock"
     description: "Fetch GPG passphrase from your password manager and inject into gpg-agent cache"
+    directory: Formula
     license: "MIT"
     install: |
       bin.install "gpg-unlock"

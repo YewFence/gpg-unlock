@@ -3,3 +3,4 @@ dist/
 gpg-unlock
 gpg-unlock.exe
 .goreleaser.yml.bak
+.claude/
