@@ -18,4 +18,4 @@ services:
     working_dir: /src
     volumes:
       - .:/src
-    command: ["release", "--snapshot", "--clean"]
+    command: ["release", "--snapshot", "--skip=publish", "--clean"]
