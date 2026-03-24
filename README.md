@@ -87,6 +87,7 @@ $version = (Invoke-RestMethod -Uri "https://api.github.com/repos/YewFence/gpg-un
 Invoke-WebRequest -Uri "https://github.com/YewFence/gpg-unlock/releases/latest/download/gpg-unlock_${version}_windows_amd64.zip" -OutFile "gpg-unlock.zip"
 Expand-Archive gpg-unlock.zip -DestinationPath . -Force
 Move-Item gpg-unlock.exe "$env:USERPROFILE\bin\gpg-unlock.exe" -Force
+# 请确保 `$env:USERPROFILE\bin` 目录已添加到您的 `PATH` 环境变量中。或者将其剪切到其他您常用的 PATH 目录中
 ```
 
 可用平台：`linux_amd64`、`linux_arm64`、`darwin_amd64`、`darwin_arm64`、`windows_amd64`、`windows_arm64`
@@ -121,7 +122,7 @@ docker compose run --rm build
 
 ```bash
 # Linux/macOS 示例
-sudo cp dist/gpg-unlock_linux_amd64_v1/gpg-unlock /usr/local/bin/gpg-unlock
+sudo install -m 755 dist/gpg-unlock_linux_amd64_v1/gpg-unlock /usr/local/bin/gpg-unlock
 
 # Windows 示例（PowerShell）
 copy dist\gpg-unlock_windows_amd64_v1\gpg-unlock.exe C:\Windows\System32\gpg-unlock.exe
