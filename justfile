@@ -16,6 +16,9 @@ uninstall:
 build-all:
     docker compose run --rm build
 
+release-snapshot:
+    docker compose run --rm release-snapshot
+
 dev:
     docker compose run --rm dev bash
 
