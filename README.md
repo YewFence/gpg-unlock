@@ -61,24 +61,36 @@ npm install -g bitwarden-cli-bio
 
 ## 安装
 
-### 从 Release 下载
-
-前往 [GitHub Releases](https://github.com/YewFence/gpg-unlock/releases/latest) 下载对应平台的预编译二进制文件。
+### Homebrew (macOS / Linux)
 
 ```bash
-# Linux/macOS（以 amd64 为例）
-curl -L https://github.com/YewFence/gpg-unlock/releases/latest/download/gpg-unlock-linux-amd64 -o gpg-unlock
-chmod +x gpg-unlock
+brew tap YewFence/tap
+brew install gpg-unlock
+```
+
+> Homebrew formula 发布到 `YewFence/homebrew-tap`，对应 tap 名称为 `YewFence/tap`。
+
+### 从 Release 下载
+
+前往 [GitHub Releases](https://github.com/YewFence/gpg-unlock/releases/latest) 下载对应平台的压缩包。
+
+```bash
+# Linux/macOS（以 linux amd64 为例）
+VERSION="$(curl -fsSL https://api.github.com/repos/YewFence/gpg-unlock/releases/latest | grep '"tag_name":' | cut -d'"' -f4 | sed 's/^v//')"
+curl -fL "https://github.com/YewFence/gpg-unlock/releases/latest/download/gpg-unlock_${VERSION}_linux_amd64.tar.gz" | tar xz
 sudo mv gpg-unlock /usr/local/bin/
 ```
 
 ```powershell
-# Windows（PowerShell）
-Invoke-WebRequest -Uri "https://github.com/YewFence/gpg-unlock/releases/latest/download/gpg-unlock-windows-amd64.exe" -OutFile "gpg-unlock.exe"
-Move-Item gpg-unlock.exe "C:\Windows\System32\gpg-unlock.exe"
+# Windows（PowerShell，以 windows amd64 为例）
+$version = (Invoke-RestMethod -Uri "https://api.github.com/repos/YewFence/gpg-unlock/releases/latest").tag_name.TrimStart("v")
+Invoke-WebRequest -Uri "https://github.com/YewFence/gpg-unlock/releases/latest/download/gpg-unlock_${version}_windows_amd64.zip" -OutFile "gpg-unlock.zip"
+Expand-Archive gpg-unlock.zip -DestinationPath . -Force
+Move-Item gpg-unlock.exe "$env:USERPROFILE\bin\gpg-unlock.exe" -Force
+# 请确保 `$env:USERPROFILE\bin` 目录已添加到您的 `PATH` 环境变量中。或者将其剪切到其他您常用的 PATH 目录中
 ```
 
-可用平台：`linux-amd64`、`linux-arm64`、`darwin-amd64`、`darwin-arm64`、`windows-amd64`
+可用平台：`linux_amd64`、`linux_arm64`、`darwin_amd64`、`darwin_arm64`、`windows_amd64`、`windows_arm64`
 
 ### Go
 
@@ -110,11 +122,10 @@ docker compose run --rm build
 
 ```bash
 # Linux/macOS 示例
-sudo cp dist/gpg-unlock-linux-amd64 /usr/local/bin/gpg-unlock
-sudo chmod +x /usr/local/bin/gpg-unlock
+sudo install -m 755 dist/gpg-unlock_linux_amd64_v1/gpg-unlock /usr/local/bin/gpg-unlock
 
 # Windows 示例（PowerShell）
-copy dist\gpg-unlock-windows-amd64.exe C:\Windows\System32\gpg-unlock.exe
+copy dist\gpg-unlock_windows_amd64_v1\gpg-unlock.exe C:\Windows\System32\gpg-unlock.exe
 ```
 
 ## 配置
