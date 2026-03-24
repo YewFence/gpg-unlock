@@ -24,6 +24,15 @@
 - ✅ 跨平台支持（Linux、macOS、Windows）
 - ✅ 单一二进制文件，无运行时依赖
 
+## 前置要求
+
+gpg-agent 必须启用 `allow-preset-passphrase`，否则密码短语注入会失败：
+
+```bash
+echo "allow-preset-passphrase" >> ~/.gnupg/gpg-agent.conf
+gpgconf --kill gpg-agent
+```
+
 ## 依赖
 
 - GPG
